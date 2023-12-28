@@ -1,159 +1,100 @@
+import google.generativeai as genai
+import base64
+import io
+import json
+import mimetypes
+import pathlib
+import pprint
+import requests
 import streamlit as st
-import plotly.figure_factory as ff
-import numpy as np
 
 
-# This code is different for each deployed app.
-CURRENT_THEME = "blue"
-IS_DARK_THEME = True
-EXPANDER_TEXT = """
-    This is a custom theme. You can enable it by copying the following code
-    to `.streamlit/config.toml`:
 
-    ```python
-    [theme]
-    primaryColor = "#E694FF"
-    backgroundColor = "#00172B"
-    secondaryBackgroundColor = "#0083B8"
-    textColor = "#C6CDD4"
-    font = "sans-serif"
-    ```
-    """
-
-
-# This code is the same for each deployed app.
-st.image(
-    "https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/240/apple/271/artist-palette_1f3a8.png",
-    width=100,
-)
-
-"""
-# Try out Theming!
-
-Click on the images below to view this app with different themes. 
-"""
-
-""
-
-THEMES = [
-    "light",
-    "dark",
-    "green",
-    "blue",
-]
-GITHUB_OWNER = "streamlit"
-
-# Show thumbnails for available themes.
-# As html img tags here, so we can add links on them.
-cols = st.beta_columns(len(THEMES))
-for col, theme in zip(cols, THEMES):
-
-    # Get repo name for this theme (to link to correct deployed app)-
-    if theme == "light":
-        repo = "theming-showcase"
-    else:
-        repo = f"theming-showcase-{theme}"
-
-    # Set border of current theme to red, otherwise black or white
-    if theme == CURRENT_THEME:
-        border_color = "red"
-    else:
-        border_color = "lightgrey" if IS_DARK_THEME else "black"
-
-    col.markdown(
-        #f'<p align=center><a href="https://share.streamlit.io/{GITHUB_OWNER}/{repo}/main"><img style="border: 1px solid {border_color}" alt="{theme}" src="https://raw.githubusercontent.com/{GITHUB_OWNER}/theming-showcase/main/thumbnails/{theme}.png" width=150></a></p>',
-        f'<p align=center><a href="https://apps.streamlitusercontent.com/{GITHUB_OWNER}/{repo}/main/streamlit_app.py/+/"><img style="border: 1px solid {border_color}" alt="{theme}" src="https://raw.githubusercontent.com/{GITHUB_OWNER}/theming-showcase/main/thumbnails/{theme}.png" width=150></a></p>',
-        unsafe_allow_html=True,
-    )
-    if theme in ["light", "dark"]:
-        theme_descriptor = theme.capitalize() + " theme"
-    else:
-        theme_descriptor = "Custom theme"
-    col.write(f"<p align=center>{theme_descriptor}</p>", unsafe_allow_html=True)
-
-
-""
-with st.beta_expander("Not loading?"):
-    st.write(
-        "You probably played around with themes before and overrode this app's theme. Go to ☰ -> Settings -> Theme and select *Custom Theme*."
-    )
-with st.beta_expander("How can I use this theme in my app?"):
-    st.write(EXPANDER_TEXT)
-
-""
-""
-
-# Draw some dummy content in main page and sidebar.
-def draw_all(
-    key,
-    plot=False,
-):
-    st.write(
-        """
-        # Example Widgets
-        
-        These widgets don't do anything. But look at all the new colors they got 👀 
-    
-        ```python
-        # First some code.
-        streamlit = "cool"
-        theming = "fantastic"
-        both = "💥"
-        ```
-        """
-    )
-
-    st.checkbox("Is this cool or what?", key=key)
-    st.radio(
-        "How many balloons?",
-        ["1 balloon 🎈", "2 balloons 🎈🎈", "3 balloons 🎈🎈🎈"],
-        key=key,
-    )
-    st.button("🤡 Click me", key=key)
-
-    # if plot:
-    #     st.write("Oh look, a plot:")
-    #     x1 = np.random.randn(200) - 2
-    #     x2 = np.random.randn(200)
-    #     x3 = np.random.randn(200) + 2
-
-    #     hist_data = [x1, x2, x3]
-    #     group_labels = ["Group 1", "Group 2", "Group 3"]
-
-    #     fig = ff.create_distplot(hist_data, group_labels, bin_size=[0.1, 0.25, 0.5])
-
-    #     st.plotly_chart(fig, use_container_width=True)
-
-    st.file_uploader("You can now upload with style", key=key)
-    st.slider(
-        "From 10 to 11, how cool are themes?", min_value=10, max_value=11, key=key
-    )
-    # st.select_slider("Pick a number", [1, 2, 3], key=key)
-    st.number_input("So many numbers", key=key)
-    st.text_area("A little writing space for you :)", key=key)
-    st.selectbox(
-        "My favorite thing in the world is...",
-        ["Streamlit", "Theming", "Baloooons 🎈 "],
-        key=key,
-    )
-    # st.multiselect("Pick a number", [1, 2, 3], key=key)
-    # st.color_picker("Colors, colors, colors", key=key)
-    with st.beta_expander("Expand me!"):
-        st.write("Hey there! Nothing to see here 👀 ")
-    st.write("")
-    # st.write("That's our progress on theming:")
-    # st.progress(0.99)
-    if plot:
-        st.write("And here's some data and plots")
-        st.json({"data": [1, 2, 3, 4]})
-        st.dataframe({"data": [1, 2, 3, 4]})
-        st.table({"data": [1, 2, 3, 4]})
-        st.line_chart({"data": [1, 2, 3, 4]})
-        # st.help(st.write)
-    st.write("This is the end. Have fun building themes!")
-
-
-draw_all("main", plot=True)
+genai.configure(api_key='AIzaSyB2w46GV54BhAQaNUhtj392HVZP_Hn3pm0')
+generation_config_b64 = 'eyJ0ZW1wZXJhdHVyZSI6MC45LCJ0b3BfcCI6MSwidG9wX2siOjEsIm1heF9vdXRwdXRfdG9rZW5zIjoyMDQ4LCJzdG9wX3NlcXVlbmNlcyI6W119' # @param {isTemplate: true}
+safety_settings_b64 = 'W3siY2F0ZWdvcnkiOiJIQVJNX0NBVEVHT1JZX0hBUkFTU01FTlQiLCJ0aHJlc2hvbGQiOiJCTE9DS19NRURJVU1fQU5EX0FCT1ZFIn0seyJjYXRlZ29yeSI6IkhBUk1fQ0FURUdPUllfSEFURV9TUEVFQ0giLCJ0aHJlc2hvbGQiOiJCTE9DS19NRURJVU1fQU5EX0FCT1ZFIn0seyJjYXRlZ29yeSI6IkhBUk1fQ0FURUdPUllfU0VYVUFMTFlfRVhQTElDSVQiLCJ0aHJlc2hvbGQiOiJCTE9DS19NRURJVU1fQU5EX0FCT1ZFIn0seyJjYXRlZ29yeSI6IkhBUk1fQ0FURUdPUllfREFOR0VST1VTX0NPTlRFTlQiLCJ0aHJlc2hvbGQiOiJCTE9DS19NRURJVU1fQU5EX0FCT1ZFIn1d' # @param {isTemplate: true}
+generation_config = json.loads(base64.b64decode(generation_config_b64))
+safety_settings = json.loads(base64.b64decode(safety_settings_b64))
+model = 'gemini-pro'
 
 with st.sidebar:
-    draw_all("sidebar")
+    st.title("Rhymeweaver")
+    st.write("Invoking the magic of poetry, this name alludes to the application's ability to craft intricate rhymes that dance off the page.")
+    st.write('With an intuitive user interface and a user-friendly design, this web application invites users to embark on a creative odyssey. By simply providing a few details about the individual, such as their name, interests, and passions, the application harnesses the transformative power of Gemini Pro to generate a personalized poem. Whether it"s a heartfelt tribute to a loved one, a celebration of personal achievements, or a reflective exploration of lifes complexities, the application adapts to the users preferences, producing poems that resonate with authenticity and emotional depth.')
+# Call the model and print the response.
+st.title("Rhymeweaver")
+aoi = [
+    "Reading",
+    "Exercising",
+    "Listening to music",
+    "Watching movies",
+    "Playing video games",
+    "Traveling",
+    "Cooking",
+    "Gardening",
+    "Photography",
+    "Art and crafts",
+    "DIY projects",
+    "Learning new skills",
+    "Meditation",
+    "Spending time with friends and family",
+    "Volunteering",
+    "Technology",
+    "Science",
+    "History",
+    "Politics",
+    "Economics",
+    "Philosophy",
+    "Psychology",
+    "Sociology",
+    "Art",
+    "Music",
+    "Literature",
+    "Film",
+    "Fashion",
+    "Travel",
+    "Food and drink",
+    "Health and wellness",
+    "Sports",
+    "Current events"
+]
+col1, col2, col3 = st.columns(3)
+with col1:
+    name = st.text_input('Name')
+    age = st.text_input('Age')
+    interest = st.multiselect('Area of interest',options=aoi)
+    others = st.text_input('Other interest (if any)',placeholder='separated by comma')
+with col2:
+    state = st.text_input('State ')
+    country = st.text_input('Country ')
+    profession = st.text_input('Kaam kya karte ho')
+    fav_show_movie = st.text_input('Favourite Show and movies',placeholder='separated by comma')
+with col3:
+    fav_songs = st.text_input('Favourite songs/singers/genres',placeholder='separated by comma')
+    gender = st.selectbox('Gender',options=['Male','Female'])
+    language = st.selectbox('Poem ka language',['English','Hindi'])
+
+contents = 'A person whose name is '+name+'. Gender is '+gender+'. Age is '+age+'. Area of interest are '+",".join(interest)
+contents += '. Lives in state of '+state+' located in country '+country+'.'
+contents += 'Profession is '+profession+'. Favourite show and movies are '+fav_show_movie+'. And Favourite songs/singers/genres are '+fav_songs+'.'
+contents += 'Write a high quality rhyming poem about 100 lines describing the person which will be a masterpiece when read by a user . Language of the poem would be'+language+'.'
+
+a = st.button('Generate',key='gen')
+if st.session_state.get("gen"):
+    with st.spinner('Wait for it'):
+        gemini = genai.GenerativeModel(model_name=model)
+        response = gemini.generate_content(
+            contents,
+            generation_config=generation_config,
+            safety_settings=safety_settings,
+            stream=False)
+
+        if generation_config.get('candidate_count', 1) == 1:
+            try:
+                st.text_area(label ="",value=response.text,height=500)
+            except Exception as e:
+                st.failure('Retry after Some time')
+        else:
+            st.failure('It is Prohibited.')
+        
+    st.success('Done')
